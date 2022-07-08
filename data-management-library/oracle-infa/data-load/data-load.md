@@ -91,6 +91,10 @@ In this step we will perform some simple data loading tasks, to load in CSV file
 
     
 
+    ![TEST](F:\GitHub\learning-library\data-management-library\oracle-infa\data-load\images\cc_viesettings.png)
+
+    
+
 6. Here we can see the list of columns and data types that will be created from the txt file. They all look correct, so click **Close** to close the settings viewer.
 
 7. Click the pencil icon for the **ORDERS** task to view its settings. 

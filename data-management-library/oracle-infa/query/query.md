@@ -2,7 +2,7 @@
 
 ## Introduction
 
-In this lab, you will navigate to INFA UI and run the scripts.
+In this lab, you will navigate to Informatica UI, create a mapping and execute it.
 
 Estimated Lab Time: 20 minutes
 
@@ -14,148 +14,443 @@ Enter background information here about the technology/feature or product used i
 
 In this lab, you will:
 
-* Navigate to INFA UI
-* Map with Pushdown Optimization/ELT
+* Navigate to Informatica UI
+* Create a mapping with Pushdown Optimization/ELT
 
 ### Prerequisites
 
 This lab assumes you have:
 
 * Provisioned and Oracle ADB instance
-* Configured secure agent to connect to ADW
-* Have loaded data into th ADW
+* Have loaded data into the ADW
+* Access to Informatica Intelligent Data Management Cloud (IDMC)
+* Configured Informatica secure agent
+* Configured Wallet and Instantclient in the secure agent
 
-## Task 1: Navigate to INFA UI
+### Tasks in this LiveLabs
+* Task 1: Create a connection to Oracle Autonomous Database
+* Task 2: Create a Project folder
+* Task 3: Create a mapping to transform orders and lineitem tables
+* Task 4: Configure Pushdown Optimization (PDO) or ELT and execute mapping
 
-1.	Add instructions to navigate to INFA UI
+## Task 1: Create a connection to Oracle Autonomous Database
 
-## Task 2: Map with Pushdown Optimization/ELT
+An Oracle Autonomous Database connection is required to read and write data from/to the database.  Follow the steps below to create an Oracle Autonomous Database connection.
 
-Let's see how to create a Mapping and a Mapping Task to transform orders and lineitem tables in Oracle Autonomous Data Warehouse and write to a new table in the same Oracle ADW using Pushdown Optimization or ELT.
+1.	Login to IDMC URL: https://dm-us.informaticacloud.com/identity-service/home
 
-1. After logging into IDMC, select **Data Integration**.
+	![IDMC login](images/picture1.png)
 
-	![Image alt text](images/infa1.png)
+2.	Select **Administrator** service in the service selector page.
 
-2. Before we dive into mapping, let's take a quick look at the Oracle Autonomous Data Warehouse connection. This connection uses a runtime environment that is a compute instance in OCI with Oracle Linux 8.5 RHCK operating system. In the runtime environment (or secure agent), the Wallet has been configured.  As well as Oracle Autonomous DW properties are set in this connection. As you can see Test Connection returns successful result.
+	![Service selector](images/picture2.png)
 
-  	Click **Service Selector** at the top left, then select **Administrator** service. In Administrator, go to **Connections**, search for **Oracle Autonomous DW - Oracle Linux 8.5 connection**. Click to open. Click **Test Connection** to test.
+3.	Click **Connections** on the left panel then click **New Connection**.
 
-	![Image alt text](images/infa2.png)
+	![New connection](images/picture3.png)
 
-3. The home page shows an Overview of the IDMC organization. Data Integration
+4.  Fill in the following:
 
-	![Image alt text](images/infa3.png)
+	* Enter a name in the Connection Name field.
+	* Select **Oracle** from the Type dropdown field.
+	* Select the secure agent that you installed.
+	* Enter your ADB username.
+	* Enter your ADB password.
+	* Enter the host string (from tnsnames.ora in instantclient subdirectory).
+	* Enter the port number (from tnsnames.ora in instantclient subdirectory).
+	* Enter the service name (from tnsnames.ora in instantclient subdirectory).
+	* Select **UTF-8** from the Code Page dropdown field.
+	* Select **SSL Auto** from the Encryption Method dropdown field.
+	* Select **TLSv1.2** from the Crypto Protocol Version dropfown field.
+	* Enter the wallet path and filename in the Trust Store field.
+	* Enter the wallet password in the Trust Store Password field.
+	* Enter the wallet path and filename in the Key Store field.
+	* Enter the wallet password in the Key Store Password field.
+	* Enter the wallet password in the Key Password field.
 
-4. Creating a new asset can be done from existing templates. Templates are pre-built mapping such as Slowly Changing Dimension as you can see in this screen. Templates allow you to quickly build a working mapping by simply editing the properties of transformations in the template. For this demo, we are creating a Mapping from scratch.
 
-   Click **New**. In the New Asset dialog box, click **Mappings** and select **Mapping** and then click **Create**.
+5. Click **Test Connection** button.  "The test for this connection was successful" message will display if the above configuration is correct.
 
-	![Image alt text](images/infa4.png)
+	![OADB connection](images/picture4.png)
 
-5.	This a new mapping with bare minimum transformations, which is, a source and a target. On the left vertical panel, the available transformations can be dragged and dropped on the canvas. There are about 30 different transformations available and hundreds of commonly used functions in the Expression transformation. Let's open an existing mapping.
 
-	![Image alt text](images/infa5.png)
+## Task 2: Create a Project folder
 
-6.	Recently used mapping is readily available in the Home page. Open **m\_transform\_orders\_lineitem\_pdo** mapping.
+Project folder can be created to store assets for specific project.  In a project folder, you can create additional folders.  Let's create a project for this LiveLabs.
 
-	Click **Home**, then **click m\_transform\_orders\_lineitem\_pdo** mapping.
+1. Click the service selector at the top left, then select **Data Integration** service.
 
-	![Image alt text](images/infa6.png)
+	![Service selector](images/picture5.png)
 
-7.	This mapping reads from two sources, Orders and Lineitem, both are Oracle ADW tables. You can read from any data sources that IDMC support. There are more than 200 data source connectors supported. The mapping then joins the two sources, aggregate and count the number of items and order total. The expression rename the fields so they look better in the target table, and write the records into orderslineitem table in Oracle ADW.
+2. Click **Explore** on the left panel.
 
-	![Image alt text](images/infa7.png)
+3. Click **New Project** to create a new project.
 
-8.	Source properties points to Oracle ADW orders table.
+4. Enter **LiveLabs** in the Name field.
 
-	Click **src\_orders** source, then click **Source** tab in Properties panel
+5. Click **Save**.
 
-	![Image alt text](images/infa8.png)
+	![Save](images/picture6.png)
 
-9.	Source properties points to Oracle ADW lineitem table.
+6. Click **LiveLabs** project.
 
-	Click **src\_lineitem** source, then click **Source** tab in Properties panel
+	![LiveLabs](images/picture7.png)
 
-	![Image alt text](images/infa9.png)
 
-10.	Joiner to join the two sources, has condition set to Master.o\_orderkey = Detail.l\_orderkey
+## Task 3: Create a mapping to transform orders and lineitem tables
+IDMC Data Integration allows you to load source data from databases, applications, and data files in the cloud or on-premises into Oracle Autonomous DB.  Data Integration supports many transformations that can be used to transform and enrich source data.  In addition, pushdown optimization (PDO) can be utilized for some transformations and functions to take advantage of Autonomous DB compute resource for data processing.
 
-	Click **jnr\_orders\_lineitem**, then click **Join Condition**
+In this lab, you will create a mapping to read two tables (Orders and Lineitem) from Autonomous DB, join the tables, perform an aggregation to create a count and total, and write the results into a new table in Autonomous DB.  Then in the mapping task, you will turn on pushdown optimization to enable the processing to occur in Autonomous DB.
 
-	![Image alt text](images/infa10.png)
+### Create a new mapping
 
-11. Let's create two aggregations. Set the Group By fields in Aggregator
+1. Click **New...**
 
-	Click **agg\_item\_count\_and\_order\_total**, then **Group By tab**.
+2. Click **Mappings**
 
-	![Image alt text](images/infa11.png)
+3. Select **Mapping** for asset type
 
-12.	Aggregator field name and expressions; the first one is counting the number of items per order.  The second one is calculating the total in each order.
+4. Click **Create** <BR>
 
-	Click **Aggregate**
+	![NewMapping](images/picture8.png)
 
-	![Image alt text](images/infa12.png)
+5. Under properties, enter **m_Orders_Lineitem_PDO** in Name field.
 
-13.	Expressions for renaming fields
+6. Ensure that Location is **LiveLabs**. If not, click **Browse** and select it.
 
-	click **exp\_rename\_fields**, click **Expression**
+	![Mapping](images/picture9.png)
 
-	![Image alt text](images/infa13.png)
+7. Click **Save**
 
-14.	Target is set to write to orderslineitem table
+### Configure Orders source
+Let's configure the Orders data source from S3.
 
-	click **tgt\_orderslineitem** and then click **Target** tab
+1.	Click the **Source** transform in the mapping canvas to assign its properties.
 
-	![Image alt text](images/infa14.png)
+2.	In the General tab, enter **src_Orders** in the Name field.<BR>
 
-15.	Let's create a Mapping Task by clicking the 3 dots icon and click New Mapping Task. Mapping task allows reusing of mapping.  For example, you can configure parameterized data sources and in mapping task, you then specify the actual data sources.  There are a few parameterization that you can configure.  Mapping task also allows the pushdown optimization configuration, scheduling, and email notification.
+	![src1](images/picture10.png)
 
-	click 3 dots icon, click **New Mapping** task
+3.	In the Source tab, select the connection created in Task 1 in the Connection dropdown field.
 
-	![Image alt text](images/infa15.png)
+4.	Click **Select** to select a source table.
 
-16.	 Let's open an existing Mapping Task.
+	![orders](images/picture11.png)
 
-	Click **Home**, then click **mct\_transform\_orders\_lineitem\_pdo** mapping task
+6.	From the source objects list, select **ORDERS** table.
 
-	![Image alt text](images/infa16.png)
+7.	Click **OK**. <BR>
 
-17.	The first step shows the task name, runtime environment, and the mapping. Runtime environment is the processing engine. In this case, the processing engine generates the SQL statement because we are setting this up with Pushdown Optimization enabled in the next step.
+	![srcOrders](images/picture12.png)
 
-	Click **Next**
+8.	Click **Preview Data** to view the first 10 records.
 
-	![Image alt text](images/infa17.png)
+	![srcOrdersPreview](images/picture13.png)
 
-18.	The second step is where you configure the execution schedule, email notification, and pushdown optimization. When Pushdown Optimization is configured, Informatica generates the SQL statement and send it to Oracle ADW to execute it. Let's execute this mapping task.
+9.	Records should be separated by fields.
 
-	Scroll down to show **Pushdown Optimization**
+	![srcOrdersPreviewFields](images/picture14.png)
 
-	![Image alt text](images/infa18.png)
+10.	Click **Done**.
 
-19.	Click **My Jobs**. My Jobs shows the jobs that have been executed, timestamp, rows processed, and status. Open the last job executed.
+11. Adjust the canvas and properties size by clicking the separator 3 dots icon or the maximize icon so all the fields can be seen.
 
-	Click **My Jobs.**
+	![srcOrdersFields](images/picture15.png)
 
-	![Image alt text](images/infa19.png)
+12.	In the Fields tab, select fields **7**, **8**, and **9**.  Then click **trash icon** to remove those fields.  
 
-20.	Here you can see the job properties in more detail. Click Download Session Log to view the pushdown optimization status. This will download the log file.
+13.	Click **Yes** when prompted.
 
-	Click **Download Session Log**
+	![srcOrdersDeleteFields](images/picture16.png)
 
-	![Image alt text](images/infa20.png)
+14. Click **Save**.
 
-21.	Pushdown optimization was successfully enabled. If you scroll down further, you will see the SQL statement that were generated for Oracle ADW to execute.
+15.	Select **o_totalprice** field.  Click **Options** dropdown, select **Edit Metadata** to change type to decimal.
 
-	Open log file and scroll down a bit
+	![srcOrdersEditField](images/picture17.png)
 
-	![Image alt text](images/infa21.png)
+16.	Click nvarchar Native Type field and change it to **decimal**.
 
-22.	In your **Oracle ADW** navigate to **Performance Hub**, you can find the SQL statement that was executed as well.
+17.	Change the Native Precision to **38**.
 
-	![Image alt text](images/infa22.png)
+18.	Change the Native Scale to **2**.<br>
 
-That concludes this demonstration.
+	![srcOrdersEditField2](images/picture18.png)
+
+19.	Click **Save** to save work in progress.
+
+### Configure Lineitem source
+Add Lineitem table as another data source.
+
+1. From the transformation palette, drag **Source** transform and drop it in the mapping canvas.
+
+	![srcLineitem](images/picture19.png)
+
+2. In the General tab, enter **src_Lineitem** in the Name field.
+
+3. In the Source tab, select the connection created in Task 1 in the Connection dropdown field.
+
+4.	Click **Select** to select a source table.
+
+5.	From the source objects list, select **LINEITEM** table.
+
+6.	Click **OK**. <BR>
+
+7.	In the Fields tab, remove all fields except **l_orderkey**, **l_extendedprice**, **l_discount**, **l_tax**.
+
+8. Click **Yes**. <BR>
+
+	![srcLineitemFields](images/picture20.png)
+
+9. Now, edit the metadata and change the data type for **l_extendedprice**, **l_discount**, **l_tax** to decimal.
+
+	![srcLineitemFields](images/picture21.png)
+
+10.	Click **Save** to save work in progress.
+
+### Join the two data sources
+
+1.	From the transformation palette, drag the **Joiner** transform and drop it over the line between the src_Orders source and target transforms.  The Joiner should now be linked to the Orders and target.  If not, manually link them.
+
+2.	Click align icon to align transformations in the mapping canvas.
+
+	![joinertx](images/picture22.png)
+
+3.	Click the plus icon above the Joiner to expand.  
+
+4.	Link **src_Lineitem** to the Detail of Joiner transform.
+
+	![joinerdetail](images/picture23.png)
+
+5.	Let’s assign the Joiner properties.
+
+6.	In the General tab, enter **jnr_orders_lineitem** in the Name field.
+
+7.	In the Join Condition tab, click the plus icon to add a new condition.
+
+8.	Select **o_orderkey** for Master and **l_orderkey** for Detail.
+
+	![joinercondition](images/picture24.png)
+
+9.	In the Advanced tab, check the **Sorted Input** checkbox.
+
+	![joinersorted](images/picture25.png)
+
+10.	Click **Save** to save work in progress.
+
+### Calculate number of items per order and order total
+
+1.	From the transformation palette, select **Aggregator** transformation, drag and drop between the jnr_orders_lineitem and Target in mapping canvas window.
+
+2.	Click align icon to align transformations in the mapping canvas.
+
+	![aggr](images/picture26.png)
+
+3.	Let’s assign the properties.
+
+4.	In the General tab, enter **agg_item_count_and_order_total** in the Name field.
+
+5.	In the Group By tab, click the plus icon to add new fields.
+
+6.	Add the following fields:
+	* **o_orderkey**
+	* **o_custkey**
+	* **o_orderstatus**
+	* **o_totalprice**
+	* **o_orderdate**
+	* **o_orderpriority**
+
+7.	When completed, the Group By tab properties should look like this:
+
+	![groupby](images/picture27.png)
+
+8.	In the Aggregate tab, click the plus icon to add a new field.
+
+9.	Enter **itemcount** in the Name field.
+
+10.	Select **integer** in the Type dropdown field.
+
+11.	Enter **10** in the Precision field.
+
+12.	Enter **0** in the Scale field.
+
+13.	Click **OK**.
+
+	![aggr1](images/picture28.png)
+
+14.	Click **Configure** to configure the expression.
+
+15.	Enter **count(l_orderkey)** in the Expression field.  This function will result in the total number of items in an order.
+
+16.	Click **Validate**.
+
+17.	Click **OK**.
+
+	![aggr1](images/picture29.png)
+
+18.	Click the plus icon to add another new field.
+
+19.	Enter **total_calc** in the Name field.
+
+20.	Select **decimal** in the Type dropdown field.
+
+21.	Enter **38** in the Precision field.
+
+22.	Enter **2** in the Scale field.
+
+23.	Click **OK**.
+
+24.	Click **Configure** to configure the expression.
+
+25.	Enter the following in the Expression field.  This function will add the total of all items in an order.
+
+```SQL
+sum(l_extendedprice * (1-l_discount) * (1+l_tax))
+```
+
+26.	Click **Validate**.
+
+27.	Click **OK**.
+
+28.	When completed, your Aggregate tab properties should look like this:
+
+	![groupbycomplete](images/picture30.png)
+
+29.	Click **Save** to save work in progress.
+
+### Rename fields 
+Add an expression to rename the fields so that they look better and are in the order we want in the Oracle Autonomous Database table.  This is an optional transformation.
+
+1.	From the transformation palette, drag **Expression** transform and drop it over the line between the agg_item_count_and_order_total and target transforms.  The expression should now be linked to the aggregator and Target transforms.  If not, manually link them.
+
+2.	Click align icon to align transformations in the mapping canvas.
+
+	![expr](images/picture31.png)
+
+3.	In the General tab, enter **exp_rename_fields** in the Name field.
+
+4.	In the Expression tab, click the plus icon to add the following fields:
+
+	| **Field Name** | **Type** | **Precision**	| **Scale**	| **Expression** |
+	| --- | --- | --- | --- | --- |
+	| orderkey | string	| 255 | 0 | o_orderkey |
+	| custkey	| string | 255 | 0 | o_custkey | 
+	| orderdate	| string | 255 | 0 | o_orderdate | 
+	| orderpriority	| string	| 255	| 0	| o_orderpriority| 
+	| orderstatus| 	string| 	255| 	0| 	o_orderstatus| 
+	| totalprice| 	decimal| 	38| 	2| 	o_totalprice|	
+
+5.	When completed, your Expression tab properties should look like this:
+
+	![exprcomplete](images/picture32.png)
+
+6.	Click **Save** to save work in progress.
+
+### Configure Target
+
+1.	Click **Target** to set a target properties.
+
+2.	In the General tab, enter **tgt_OrdersLineitem** in the Name field.
+
+3.	In the Incoming Fields tab, click plus icon to add a field rule.
+
+4.	Click Include operator and change it to **Exclude**.
+
+5.	Click **Configure**.
+
+	![target](images/picture33.png)
+
+6.	Select all fields except the following:
+	* custkey
+	* itemcount
+	* *orderdate
+	* orderkey
+	* orderpriority
+	* orderstatus
+	* total_calc
+	* totalprice
+
+7.	When completed, the Incoming Fields tab should look like this:
+
+	![targetfields](images/picture34.png)
+
+8.	In the Target tab, select the connection created in Task 1 in the Connection dropdown field.
+
+9.  Click **Select** to select target table.
+
+	![targetcomplete](images/picture35.png)
+
+10.	Select **Create New at Runtime** for Target Object.
+
+11.	Enter **ORDERSLINEITEM** in Object Name field.
+
+12. Click **OK**.
+
+	![targettable](images/picture36.png)
+
+13.	Click **Save** to save and validate the mapping.  A **Valid** message shows up next to the mapping name.
+
+	![targetfields](images/picture37.png)
+
+## Task 4: Configure Pushdown Optimization (PDO) or ELT and execute mapping
+
+Let’s configure Pushdown Optimization (PDO) in the Mapping Task and execute it.
+
+### Create a Mapping Task and Execute it
+
+1.	Click 3 dots icon to create a **Mapping task** from the mapping
+
+2.	Select **New Mapping Task…**
+
+	![mct](images/picture38.png)
+
+3.	In the New mapping task window, enter **mct_Orders_Lineitem_PDO** in the Name field.
+
+4.	Select **LiveLabs** for Location if not already selected.
+
+5.	Select the secure agent you have configured in the prerequisite for Runtime Environment.
+
+6.	Click **Next**. <BR>
+
+	![mctdef](images/picture39.png) 
+
+7.	Scroll down to the Pushdown Optimization section.
+
+8.	Select **Full** from the Pushdown Optimization dropdown list.
+
+9. Check **Create Temporary View** and **Create Temporary Sequence**.
+
+10.	Click **Finish**. <BR>
+
+	![mct](images/picture40.png)
+
+11.	Click **Run** to execute the mapping task.
+
+	![mctrun](images/picture41.png)
+
+### View job execution
+
+1.	Click **My Jobs** to monitor the job execution.
+
+	![job](images/picture42.png)
+
+2.	Click **Refresh** icon when the “Updates available” message appears.
+
+3.	When the job is completed, make sure Status is **Success**.
+
+	![success](images/picture43.png)
+
+4.	Drill down to the completed job by clicking the instance name.  Then click Download Session Log to view the log.  
+
+	![download](images/picture44.png)
+
+5. In the log you will see a message indicating that Pushdown Optimization is successfully enabled. 
+
+	![pdosuccess](images/picture45.png)
+
+6.	You will also see an INSERT SQL statement that Informatica generated for execution in Oracle Autonomous Database.
+
+You have successfully completed this LiveLabs.
 
 ## Learn More
 
